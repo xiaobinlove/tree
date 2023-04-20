@@ -1,0 +1,32 @@
+@nodeHeight: 24px;
+.zov-tree {
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 14px;
+  &__treenode {
+    display: flex;
+    padding: 0 0 4px 0;
+    align-items: flex-start;
+  }
+  &__switcher {
+    width: 24px;
+    line-height: @nodeHeight;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    font-size: 10px;
+  }
+  &__node-content-wrapper {
+    line-height: @nodeHeight;
+    user-select: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s,border 0s,line-height 0s,box-shadow 0s;
+    // &:hover {
+    //   background: red;
+    // }
+    &--selected {
+      background-color: #e6f4ff;
+    }
+  }
+}
