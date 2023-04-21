@@ -1,5 +1,4 @@
 import MyTree, { DataNode as DataNode2 } from './components/tree'
-import './App.less'
 import { Tree } from 'antd'
 import type { TreeProps, DataNode } from 'antd/es/tree'
 import { StarOutlined, EditFilled } from '@ant-design/icons';

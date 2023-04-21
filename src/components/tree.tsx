@@ -41,7 +41,7 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultSelectedKey
     setSelectedKeys(newSelectedKeys);
     onSelect?.(newSelectedKeys, { selectedNodes: [item] });
   };
-  const renderTreeNodes = (nodes: DataNode[], level = 0) => {
+  const renderTreeNodes = (nodes: DataNode[], level = 0, isOpen = true) => {
     return nodes.map((item) => {
       const hasChildren = item.children && item.children.length > 0;
       const isExpanded = expandedKeys.includes(item.key);
@@ -49,7 +49,7 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultSelectedKey
       const switcherRotate = isExpanded ? 90 : 0;
       const nodeIcon = item.icon || icon || null
       return (
-        <div key={item.key} className="zov-tree__node" style={{ paddingLeft: `${level * 16}px` }}>
+        <div key={item.key} className={classnames('zov-tree__node', { 'zov-tree__node--hide': !isOpen })} style={{ paddingLeft: `${level * 16}px` }}>
           {/* 展开/收起 */}
           {hasChildren && (
             <span
@@ -69,7 +69,7 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultSelectedKey
             <NodeRender data={item} />
           </span>
           {/* 递归渲染子节点 */}
-          {hasChildren && isExpanded && renderTreeNodes(item.children!, level + 1)}
+          {hasChildren && renderTreeNodes(item.children!, level + 1, isExpanded)}
         </div>
       );
     });
