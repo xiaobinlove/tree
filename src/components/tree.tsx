@@ -2,10 +2,10 @@ import React, { FC, ReactNode, useState, useMemo, useEffect, ComponentType } fro
 import './tree.less';
 import classnames from 'classnames';
 import { CaretRightOutlined } from '@ant-design/icons';
-
+type Key = string
 export type DataNode = {
   disabled?: boolean // 是否禁用节点
-  key: string; // 节点唯一标识
+  key: Key; // 节点唯一标识
   title: ReactNode; // 节点标题，可以是字符串或React组件
   icon?: React.ReactNode | ((props: { expanded: boolean }) => React.ReactNode); // 节点图标，可以是React节点或函数类型
   children?: DataNode[]; // 子节点数据
@@ -16,15 +16,15 @@ export type NodeProps = {
 interface IProps {
   disabled?: boolean // 将树禁用
   treeData: DataNode[]; // 树形结构数据
-  defaultSelectedKeys?: string[]; // 默认选中的节点的key
   defaultExpandAll?: boolean; // 默认展开所有节点
   icon?: React.ReactNode | ((props: { expanded: boolean }) => React.ReactNode); // 树形控件节点的图标，可以是React节点或函数类型
-  onSelect?: (selectedKeys: string[], e: { selectedNodes: DataNode[] }) => void; // 选中节点的回调函数
+  onSelect?: (selectedKey: Key, e: { selectedNodes: DataNode[] }) => void; // 选中节点的回调函数
   NodeRender?: ComponentType<NodeProps>;
+  selectedKey: Key
 }
 const defaultNodeRender: ComponentType<NodeProps> = ({ data })=> <span>{data.title}</span>
-const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultSelectedKeys = [], defaultExpandAll = false, onSelect, NodeRender = defaultNodeRender }) => {
-  const [selectedKeys, setSelectedKeys] = useState(defaultSelectedKeys);
+const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultExpandAll = false, onSelect, NodeRender = defaultNodeRender }) => {
+  const [selectedKeys, setSelectedKeys] = useState([]);
   const [expandedKeys, setExpandedKeys] = useState<string[]>(defaultExpandAll ? generateDefaultExpandedKeys(treeData) : []);
   const handleExpand = (key: string, isExpand: boolean) => {
     if (isExpand) {
@@ -37,7 +37,7 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultSelectedKey
     if (disabled || item.disabled) {
       return;
     }
-    const newSelectedKeys = selectedKeys.includes(item.key) ? [] : [item.key]; // 切换选中状态
+    const newSelectedKeys: any = selectedKeys.includes(item.key) ? [] : [item.key]; // 切换选中状态
     setSelectedKeys(newSelectedKeys);
     onSelect?.(newSelectedKeys, { selectedNodes: [item] });
   };
@@ -74,12 +74,6 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultSelectedKey
       );
     });
   };
-
-  useEffect(() => {
-    if (defaultSelectedKeys.length > 0) {
-      setSelectedKeys(defaultSelectedKeys);
-    }
-  }, [defaultSelectedKeys]);
 
   const memoizedTreeData = useMemo(() => {
     return treeData;
