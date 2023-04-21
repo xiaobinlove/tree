@@ -3,6 +3,12 @@ import './tree.less';
 import classnames from 'classnames';
 import { CaretRightOutlined } from '@ant-design/icons';
 type Key = string
+type ExpandKey = {
+  [key: Key]: boolean
+}
+type LevelKey = {
+  [key: Key]: number
+}
 export type DataNode = {
   disabled?: boolean // 是否禁用节点
   key: Key; // 节点唯一标识
@@ -16,26 +22,32 @@ export type NodeProps = {
 interface IProps {
   disabled?: boolean // 将树禁用
   treeData: DataNode[]; // 树形结构数据
-  defaultExpandAll?: boolean; // 默认展开所有节点
-  defaultExpand?:number; // 0 all 1 一级
+  defaultExpand?: number | 'all'; // 0 all 1 一级
   icon?: React.ReactNode | ((props: { expanded: boolean }) => React.ReactNode); // 树形控件节点的图标，可以是React节点或函数类型
   NodeRender?: ComponentType<NodeProps>;
   selectedKey?: Key // （受控）设置选中的树节点
-  onSelect?: (selectedKey:Key, selectedNode: DataNode, e: Event) => void; // 选中节点的回调函数
+  onSelect?: (selectedKey: Key, selectedNode: DataNode, e: Event) => void; // 选中节点的回调函数
 }
-const defaultNodeRender: ComponentType<NodeProps> = ({ data })=> <span>{data.title}</span>
-const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultExpandAll = true, NodeRender = defaultNodeRender, selectedKey, onSelect }) => {
-  const [expandedKeys, setExpandedKeys] = useState<Key[]>(()=> (defaultExpandAll ? generateDefaultExpandedKeys(treeData) : []));
-  // const [expandedKeys2, setExpandedKeys2] = useState<{[key:string]:boolean}> ({
-  //   '01--1':true,
-  // })
-  useMemo(() => {}, [treeData])
-  const handleExpand = (key: Key, isExpand: boolean) => {
-    if (isExpand) {
-      setExpandedKeys((keys) => [...keys, key]);
-    } else {
-      setExpandedKeys((keys) => keys.filter((item) => item !== key));
+const defaultNodeRender: ComponentType<NodeProps> = ({ data }) => <span>{data.title}</span>
+const Tree: FC<IProps> = ({ disabled = false, icon, treeData, NodeRender = defaultNodeRender, selectedKey, onSelect, defaultExpand: _defaultExpand = 0 }) => {
+  const defaultExpand = _defaultExpand === 'all' ? 99999 : _defaultExpand;
+  const expandMap = useMemo(() => {
+    let expandMap: ExpandKey = {}
+    function loop(nodes: DataNode[], level: number) {
+      nodes.forEach((node) => {
+        expandMap[node.key] = level <= defaultExpand
+        if (node.children) {
+          loop(node.children, level + 1);
+        }
+      });
     }
+    loop(treeData, 0);
+    return expandMap
+  }, [treeData])
+  const [expandMapObj, setExpandMap] = useState(() => expandMap)
+  const handleExpand = (key: Key) => {
+    expandMap[key] = !expandMap[key]
+    setExpandMap({ ...expandMapObj, [key]: !expandMap[key] })
   };
   const handleSelect = (item: DataNode, e: Event) => {
     if (disabled || item.disabled) {
@@ -46,7 +58,7 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultExpandAll =
   const renderTreeNodes = (nodes: DataNode[]) => {
     return nodes.map((item) => {
       const hasChildren = item.children && item.children.length > 0;
-      const isExpanded = expandedKeys.includes(item.key);
+      const isExpanded = expandMap[item.key];
       const isSelected = selectedKey === item.key;
       const switcherRotate = isExpanded ? 90 : 0;
       const nodeIcon = item.icon || icon || null
@@ -56,7 +68,7 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultExpandAll =
           {
             <span
               className={classnames('zov-tree__switcher', { 'zov-tree--hidden': !hasChildren })}
-              onClick={() => handleExpand(item.key, !isExpanded)}
+              onClick={() => handleExpand(item.key)}
             >
               <CaretRightOutlined style={{ transform: `rotate(${switcherRotate}deg)` }} />
             </span>
@@ -71,7 +83,7 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultExpandAll =
             <NodeRender data={item} />
           </span>
           {/* 递归渲染子节点 */}
-          {hasChildren && <div className={ classnames({ 'zov-tree__children': true, 'zov-tree__node--hide': isExpanded }) }>{renderTreeNodes(item.children!)}</div>}
+          {hasChildren && <div className={classnames({ 'zov-tree__children': true, 'zov-tree__node--hide': !isExpanded })}>{renderTreeNodes(item.children!)}</div>}
         </div>
       );
     });
@@ -79,18 +91,4 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultExpandAll =
 
   return <div className="zov-tree">{renderTreeNodes(treeData)}</div>;
 };
-// 获取默认展开keys
-function generateDefaultExpandedKeys(data: DataNode[]): string[] {
-  const keys: string[] = [];
-  function loop(nodes: DataNode[]) {
-    nodes.forEach((node) => {
-      keys.push(node.key);
-      if (node.children) {
-        loop(node.children);
-      }
-    });
-  }
-  loop(data);
-  return keys;
-}
 export default Tree;
