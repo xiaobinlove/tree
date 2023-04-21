@@ -2,6 +2,8 @@ import MyTree, { DataNode as DataNode2 } from './components/tree'
 import { Tree } from 'antd'
 import type { TreeProps, DataNode } from 'antd/es/tree'
 import { StarOutlined, EditFilled } from '@ant-design/icons';
+import { useState } from 'react';
+import { Test } from './components/test'
 const treeData: DataNode[] = [
   {
     title: 'parent 1',
@@ -31,6 +33,10 @@ const treeData: DataNode[] = [
         children: [{ title: 'sfsfsfs', key: '0-0-1-0' }],
       },
     ]
+  },
+  {
+    title: 'parent 1222222222222',
+    key: '0-033',
   }
 ]
 const treeData2: DataNode2[] = [
@@ -69,9 +75,19 @@ function App() {
   const onCheck: TreeProps['onCheck'] = (checkedKeys, info) => {
     console.log('onCheck', checkedKeys, info);
   };
+  const [selectedKey, setSelectedKey] = useState('')
+  const [dataSource, setDataSource] = useState(treeData2)
+
+  const resetDataSource = ()=>{
+    setDataSource([...treeData2,  {
+      title: 'parent 1-12',
+      key: '0-0-13'
+    },])
+  }
   return (
     <div className="App">
-      <MyTree treeData={treeData2} icon={<EditFilled />} defaultExpandAll={true}  defaultSelectedKeys={['0-0-0']} />
+      <button onClick={resetDataSource}>xxx</button>
+      <MyTree  NodeRender={Test} treeData={dataSource} selectedKey={selectedKey} onSelect={(key) => { setSelectedKey(key) } } />
       {/* <Tree
         autoExpandParent
         icon={<EditFilled />}

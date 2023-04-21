@@ -17,51 +17,53 @@ interface IProps {
   disabled?: boolean // 将树禁用
   treeData: DataNode[]; // 树形结构数据
   defaultExpandAll?: boolean; // 默认展开所有节点
+  defaultExpand?:number; // 0 all 1 一级
   icon?: React.ReactNode | ((props: { expanded: boolean }) => React.ReactNode); // 树形控件节点的图标，可以是React节点或函数类型
-  onSelect?: (selectedKey: Key, e: { selectedNodes: DataNode[] }) => void; // 选中节点的回调函数
   NodeRender?: ComponentType<NodeProps>;
-  selectedKey: Key
+  selectedKey?: Key // （受控）设置选中的树节点
+  onSelect?: (selectedKey:Key, selectedNode: DataNode, e: Event) => void; // 选中节点的回调函数
 }
 const defaultNodeRender: ComponentType<NodeProps> = ({ data })=> <span>{data.title}</span>
-const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultExpandAll = false, onSelect, NodeRender = defaultNodeRender }) => {
-  const [selectedKeys, setSelectedKeys] = useState([]);
-  const [expandedKeys, setExpandedKeys] = useState<string[]>(defaultExpandAll ? generateDefaultExpandedKeys(treeData) : []);
-  const handleExpand = (key: string, isExpand: boolean) => {
+const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultExpandAll = true, NodeRender = defaultNodeRender, selectedKey, onSelect }) => {
+  const [expandedKeys, setExpandedKeys] = useState<Key[]>(()=> (defaultExpandAll ? generateDefaultExpandedKeys(treeData) : []));
+  // const [expandedKeys2, setExpandedKeys2] = useState<{[key:string]:boolean}> ({
+  //   '01--1':true,
+  // })
+  useMemo(() => {}, [treeData])
+  const handleExpand = (key: Key, isExpand: boolean) => {
     if (isExpand) {
       setExpandedKeys((keys) => [...keys, key]);
     } else {
       setExpandedKeys((keys) => keys.filter((item) => item !== key));
     }
   };
-  const handleSelect = (item: DataNode) => {
+  const handleSelect = (item: DataNode, e: Event) => {
     if (disabled || item.disabled) {
       return;
     }
-    const newSelectedKeys: any = selectedKeys.includes(item.key) ? [] : [item.key]; // 切换选中状态
-    setSelectedKeys(newSelectedKeys);
-    onSelect?.(newSelectedKeys, { selectedNodes: [item] });
+    onSelect?.(item.key, item, e)
   };
-  const renderTreeNodes = (nodes: DataNode[], level = 0, isOpen = true) => {
+  const renderTreeNodes = (nodes: DataNode[]) => {
     return nodes.map((item) => {
       const hasChildren = item.children && item.children.length > 0;
       const isExpanded = expandedKeys.includes(item.key);
-      const isSelected = selectedKeys.includes(item.key);
+      const isSelected = selectedKey === item.key;
       const switcherRotate = isExpanded ? 90 : 0;
       const nodeIcon = item.icon || icon || null
       return (
-        <div key={item.key} className={classnames('zov-tree__node', { 'zov-tree__node--hide': !isOpen })} style={{ paddingLeft: `${level * 16}px` }}>
+        <div key={item.key} data-key={item.key} className={classnames('zov-tree__node')}>
           {/* 展开/收起 */}
-          {hasChildren && (
+          {
             <span
-              className="zov-tree__switcher"
+              className={classnames('zov-tree__switcher', { 'zov-tree--hidden': !hasChildren })}
               onClick={() => handleExpand(item.key, !isExpanded)}
             >
               <CaretRightOutlined style={{ transform: `rotate(${switcherRotate}deg)` }} />
             </span>
-          )}
+          }
           <span
             className={classnames('zov-tree__node-content-wrapper', { 'zov-tree__node-content-wrapper--selected': isSelected, 'zov-tree__node-content-wrapper--disabled': disabled || item.disabled })}
-            onClick={() => handleSelect(item)}
+            onClick={(e: any) => handleSelect(item, e)}
           >
             {/* 自定义节点图标 */}
             {nodeIcon && (<span className="zov-tree__icon">{typeof nodeIcon === 'function' ? nodeIcon({ expanded: isExpanded }) : nodeIcon}</span>)}
@@ -69,17 +71,13 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, defaultExpandAll =
             <NodeRender data={item} />
           </span>
           {/* 递归渲染子节点 */}
-          {hasChildren && renderTreeNodes(item.children!, level + 1, isExpanded)}
+          {hasChildren && <div className={ classnames({ 'zov-tree__children': true, 'zov-tree__node--hide': isExpanded }) }>{renderTreeNodes(item.children!)}</div>}
         </div>
       );
     });
   };
 
-  const memoizedTreeData = useMemo(() => {
-    return treeData;
-  }, [treeData]);
-
-  return <div className="zov-tree">{renderTreeNodes(memoizedTreeData)}</div>;
+  return <div className="zov-tree">{renderTreeNodes(treeData)}</div>;
 };
 // 获取默认展开keys
 function generateDefaultExpandedKeys(data: DataNode[]): string[] {
