@@ -2,31 +2,39 @@
 .zov-tree {
   color: rgba(0, 0, 0, 0.88);
   font-size: 14px;
-  &__treenode {
-    display: flex;
-    padding: 0 0 4px 0;
-    align-items: flex-start;
-  }
   &__switcher {
+    display: inline-block;
     width: 24px;
     line-height: @nodeHeight;
     text-align: center;
     cursor: pointer;
     user-select: none;
     font-size: 10px;
+    transition: transform 0.2s ease-out; /* 添加 transition 属性 */
   }
   &__node-content-wrapper {
+    display: inline-block;
+    padding-right:6px;
     line-height: @nodeHeight;
     user-select: none;
     background: transparent;
     border-radius: 6px;
     cursor: pointer;
+    margin-bottom: 4px;
     transition: all 0.2s,border 0s,line-height 0s,box-shadow 0s;
-    // &:hover {
-    //   background: red;
-    // }
-    &--selected {
+    &:hover:not(.zov-tree__node-content-wrapper--selected):not(.zov-tree__node-content-wrapper--disabled) {
+      background-color: #f5f5f5;
+    }
+    &--selected:not(.zov-tree__node-content-wrapper--disabled) {
       background-color: #e6f4ff;
     }
+    &--disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+  &__icon {
+    margin: 6px;
   }
 }

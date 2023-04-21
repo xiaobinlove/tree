@@ -12,6 +12,7 @@ const treeData: DataNode[] = [
       {
         title: 'parent 1-0',
         key: '0-0-0',
+        disabled: true,
         icon: <StarOutlined />,
         children: [
           {
@@ -35,16 +36,18 @@ const treeData: DataNode[] = [
 ]
 const treeData2: DataNode2[] = [
   {
-    title: 'parent 1',
+    title: 'parent 2',
     key: '0-0',
     children: [
       {
         title: 'parent 1-0',
         key: '0-0-0',
+        disabled: true,
+        icon: <StarOutlined />,
         children: [
           {
             title: 'leaf',
-            key: '0-0-0-0',
+            key: '0-0-0-0'
           },
           {
             title: 'leaf',
@@ -69,18 +72,17 @@ function App() {
   };
   return (
     <div className="App">
-      <StarOutlined />
-      <MyTree treeData={treeData2}   defaultSelectedKeys={['0-0-0', '0-0-1']} />
-      <Tree
+      <MyTree treeData={treeData2} icon={<EditFilled />} defaultExpandAll={true}  defaultSelectedKeys={['0-0-0']} />
+      {/* <Tree
+        autoExpandParent
         icon={<EditFilled />}
         defaultExpandAll
-        defaultExpandedKeys={['0-0-0', '0-0-1']}
         defaultSelectedKeys={['0-0-0', '0-0-1']}
         treeData={treeData}
         onSelect={onSelect}
         onCheck={onCheck}
         showIcon
-       />
+       /> */}
     </div>
   )
 }
