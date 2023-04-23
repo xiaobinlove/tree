@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState, useMemo, useEffect, ComponentType } from 'react';
+import React, { FC, ReactNode, useState, useMemo } from 'react';
 import './tree.less';
 import classnames from 'classnames';
 import { CaretRightOutlined } from '@ant-design/icons';
@@ -6,9 +6,8 @@ type Key = string
 type ExpandKey = {
   [key: Key]: boolean
 }
-type LevelKey = {
-  [key: Key]: number
-}
+let expandMap: ExpandKey = {} // 用map记录当前展开的节点{ '节点的key': 是否展开  }
+type NodeRenderType = ((props: DataNode) => React.ReactNode)
 export type DataNode = {
   disabled?: boolean // 是否禁用节点
   key: Key; // 节点唯一标识
@@ -22,32 +21,31 @@ export type NodeProps = {
 interface IProps {
   disabled?: boolean // 将树禁用
   treeData: DataNode[]; // 树形结构数据
-  defaultExpand?: number | 'all'; // 0 all 1 一级
+  defaultExpand?: number | 'all'; // 默认展开层级， 0 不都不展开 1 展开第一级 2 展开第一级和第二级 ... 
   icon?: React.ReactNode | ((props: { expanded: boolean }) => React.ReactNode); // 树形控件节点的图标，可以是React节点或函数类型
-  NodeRender?: ComponentType<NodeProps>;
-  selectedKey?: Key // （受控）设置选中的树节点
+  nodeRender?: NodeRenderType;
   onSelect?: (selectedKey: Key, selectedNode: DataNode, e: Event) => void; // 选中节点的回调函数
 }
-const defaultNodeRender: ComponentType<NodeProps> = ({ data }) => <span>{data.title}</span>
-const Tree: FC<IProps> = ({ disabled = false, icon, treeData, NodeRender = defaultNodeRender, selectedKey, onSelect, defaultExpand: _defaultExpand = 0 }) => {
-  const defaultExpand = _defaultExpand === 'all' ? 99999 : _defaultExpand;
-  const expandMap = useMemo(() => {
-    let expandMap: ExpandKey = {}
+const defaultNodeRender: NodeRenderType = (data) => <span>{data.title}</span>
+const Tree: FC<IProps> = ({ disabled = false, icon, treeData, nodeRender = defaultNodeRender, onSelect, defaultExpand = 2 }) => {
+  expandMap = useMemo(() => {
     function loop(nodes: DataNode[], level: number) {
       nodes.forEach((node) => {
-        expandMap[node.key] = level <= defaultExpand
+        if (!expandMap.hasOwnProperty(node.key)) {
+          expandMap[node.key] = defaultExpand === 'all' ? true : level <= defaultExpand
+        }
         if (node.children) {
           loop(node.children, level + 1);
         }
       });
     }
-    loop(treeData, 0);
+    loop(treeData, 1);
     return expandMap
   }, [treeData])
-  const [expandMapObj, setExpandMap] = useState(() => expandMap)
+  const [expandMapObj, setExpandMapObj] = useState(() => expandMap)
   const handleExpand = (key: Key) => {
     expandMap[key] = !expandMap[key]
-    setExpandMap({ ...expandMapObj, [key]: !expandMap[key] })
+    setExpandMapObj({ ...expandMapObj, [key]: !expandMap[key] })
   };
   const handleSelect = (item: DataNode, e: Event) => {
     if (disabled || item.disabled) {
@@ -59,7 +57,6 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, NodeRender = defau
     return nodes.map((item) => {
       const hasChildren = item.children && item.children.length > 0;
       const isExpanded = expandMap[item.key];
-      const isSelected = selectedKey === item.key;
       const switcherRotate = isExpanded ? 90 : 0;
       const nodeIcon = item.icon || icon || null
       return (
@@ -73,14 +70,15 @@ const Tree: FC<IProps> = ({ disabled = false, icon, treeData, NodeRender = defau
               <CaretRightOutlined style={{ transform: `rotate(${switcherRotate}deg)` }} />
             </span>
           }
+
           <span
-            className={classnames('zov-tree__node-content-wrapper', { 'zov-tree__node-content-wrapper--selected': isSelected, 'zov-tree__node-content-wrapper--disabled': disabled || item.disabled })}
+            className={classnames('zov-tree__node-content-wrapper', { 'zov-tree__node-content-wrapper--disabled': disabled || item.disabled })}
             onClick={(e: any) => handleSelect(item, e)}
           >
             {/* 自定义节点图标 */}
             {nodeIcon && (<span className="zov-tree__icon">{typeof nodeIcon === 'function' ? nodeIcon({ expanded: isExpanded }) : nodeIcon}</span>)}
             {/* 标题 */}
-            <NodeRender data={item} />
+            { nodeRender(item) }
           </span>
           {/* 递归渲染子节点 */}
           {hasChildren && <div className={classnames({ 'zov-tree__children': true, 'zov-tree__node--hide': !isExpanded })}>{renderTreeNodes(item.children!)}</div>}

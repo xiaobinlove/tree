@@ -8,18 +8,15 @@ const treeData: DataNode2[] = [
   {
     title: 'parent 1',
     key: '0-022233',
-    icon: <StarOutlined />,
     children: [
       {
         title: 'parent 1-0',
         key: '0-0-022133',
         disabled: true,
-        icon: <StarOutlined />,
         children: [
           {
             title: 'leaf',
             key: '0-0-0-1230',
-            icon: <StarOutlined />,
           },
           {
             title: 'leaf',
@@ -48,15 +45,16 @@ const treeData2: DataNode2[] = [
         title: 'parent 1-0',
         key: '0-0-0',
         disabled: true,
-        icon: <StarOutlined />,
         children: [
           {
             title: 'leaf',
-            key: '0-0-0-0'
+            key: '0-0-0-0',
+            disabled: true,
           },
           {
             title: 'leaf',
             key: '0-0-0-1',
+            disabled: true,
           },
         ],
       },
@@ -84,10 +82,10 @@ function App() {
   return (
     <div className="App">
       <button onClick={resetDataSource}>xxx</button>
-      <MyTree  NodeRender={Test} treeData={dataSource} selectedKey={selectedKey} onSelect={(key) => { setSelectedKey(key) } } />
+      <MyTree key={'11111'} nodeRender={(data) => <Test data={data}></Test>} treeData={dataSource} onSelect={(key) => { setSelectedKey(key) } } />
+      {/* <MyTree key={'2222'} treeData={treeData2} selectedKey={selectedKey} onSelect={(key) => { setSelectedKey(key) } } /> */}
       {/* <Tree
         autoExpandParent
-        icon={<EditFilled />}
         defaultExpandAll
         defaultSelectedKeys={['0-0-0', '0-0-1']}
         treeData={treeData}
